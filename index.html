@@ -4,60 +4,90 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vegetable Price List</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
 </head>
 <body>
     <h1>Vegetable Price List</h1>
-    <table>
+    <table border="1">
         <thead>
             <tr>
                 <th>Vegetable</th>
-                <th>Price</th>
+                <th>Price (in $)</th>
                 <th>Action</th>
             </tr>
         </thead>
-        <tbody>
-            <tr>
-                <td contenteditable="true">Carrots</td>
-                <td contenteditable="true">$1.99</td>
-                <td><button onclick="updatePrice(this)">Update</button></td>
-            </tr>
-            <tr>
-                <td contenteditable="true">Tomatoes</td>
-                <td contenteditable="true">$2.49</td>
-                <td><button onclick="updatePrice(this)">Update</button></td>
-            </tr>
-            <!-- You can add more rows here -->
+        <tbody id="vegetable-list">
+            <!-- Dynamic rows will be inserted here -->
         </tbody>
     </table>
 
+    <h2>Add a Vegetable:</h2>
+    <form id="add-vegetable-form">
+        <label for="vegetable-name">Name:</label>
+        <input type="text" id="vegetable-name" required>
+        <label for="vegetable-price">Price ($):</label>
+        <input type="number" id="vegetable-price" required>
+        <button type="submit">Add Vegetable</button>
+    </form>
+
     <script>
-        function updatePrice(button) {
-            const row = button.parentNode.parentNode;
-            const vegetableCell = row.cells[0];
-            const priceCell = row.cells[1];
+        // Check for existing data in localStorage and initialize the list
+        let vegetableData = JSON.parse(localStorage.getItem('vegetableData')) || [];
 
-            const newPrice = prompt(`Update the price for ${vegetableCell.textContent}`, priceCell.textContent);
+        function updateTable() {
+            const tableBody = document.getElementById('vegetable-list');
+            tableBody.innerHTML = '';
 
-            if (newPrice !== null) {
-                priceCell.textContent = newPrice;
+            for (const data of vegetableData) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${data.name}</td>
+                    <td>${data.price}</td>
+                    <td><button onclick="updatePrice(${data.id})">Update Price</button></td>
+                `;
+                tableBody.appendChild(row);
             }
         }
+
+        function updatePrice(vegetableId) {
+            const newPrice = parseFloat(prompt('Enter the new price for this vegetable:'));
+            if (!isNaN(newPrice)) {
+                for (const data of vegetableData) {
+                    if (data.id === vegetableId) {
+                        data.price = newPrice;
+                        localStorage.setItem('vegetableData', JSON.stringify(vegetableData));
+                        updateTable();
+                        break;
+                    }
+                }
+            }
+        }
+
+        updateTable();
+
+        const addVegetableForm = document.getElementById('add-vegetable-form');
+        addVegetableForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const nameInput = document.getElementById('vegetable-name');
+            const priceInput = document.getElementById('vegetable-price');
+
+            const name = nameInput.value;
+            const price = parseFloat(priceInput.value);
+
+            if (name && !isNaN(price)) {
+                const newVegetable = {
+                    id: Date.now(),
+                    name,
+                    price
+                };
+
+                vegetableData.push(newVegetable);
+                localStorage.setItem('vegetableData', JSON.stringify(vegetableData));
+                updateTable();
+
+                nameInput.value = '';
+                priceInput.value = '';
+            }
+        });
     </script>
 </body>
 </html>
